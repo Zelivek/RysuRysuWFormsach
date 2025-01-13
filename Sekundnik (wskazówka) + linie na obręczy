@@ -1,0 +1,132 @@
+#pragma once
+
+namespace CppCLRWinFormsProject {
+
+    using namespace System;
+    using namespace System::ComponentModel;
+    using namespace System::Collections;
+    using namespace System::Windows::Forms;
+    using namespace System::Data;
+    using namespace System::Drawing;
+
+    public ref class Form1 : public System::Windows::Forms::Form
+    {
+    public:
+        Form1(void)
+        {
+            InitializeComponent();
+            InitializeTimer();
+        }
+
+    protected:
+        ~Form1()
+        {
+            if (components)
+            {
+                delete components;
+            }
+        }
+
+    private:
+        System::Windows::Forms::Button^ btn1;
+        System::Windows::Forms::Timer^ timer; // Timer do odświeżania wskazówki
+        System::ComponentModel::Container^ components;
+
+#pragma region Windows Form Designer generated code
+        void InitializeComponent(void)
+        {
+            this->btn1 = (gcnew System::Windows::Forms::Button());
+            this->SuspendLayout();
+            // 
+            // btn1
+            // 
+            this->btn1->Location = System::Drawing::Point(286, 329);
+            this->btn1->Name = L"btn1";
+            this->btn1->Size = System::Drawing::Size(100, 23);
+            this->btn1->TabIndex = 0;
+            this->btn1->Text = L"Start zegara";
+            this->btn1->UseVisualStyleBackColor = true;
+            this->btn1->Click += gcnew System::EventHandler(this, &Form1::btn1_Click);
+            // 
+            // Form1
+            // 
+            this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
+            this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
+            this->ClientSize = System::Drawing::Size(703, 451);
+            this->Controls->Add(this->btn1);
+            this->Name = L"Form1";
+            this->Text = L"Zegar";
+            this->ResumeLayout(false);
+
+        }
+#pragma endregion
+
+    private:
+        void InitializeTimer() {
+            timer = gcnew System::Windows::Forms::Timer();
+            timer->Interval = 1000; // 1000 ms = 1 sekunda
+            timer->Tick += gcnew EventHandler(this, &Form1::OnTimerTick);
+        }
+
+        // Start zegara po kliknięciu przycisku
+        System::Void btn1_Click(System::Object^ sender, System::EventArgs^ e) {
+            timer->Start();
+        }
+
+        // Wywoływane przez timer co 1000 ms
+        System::Void OnTimerTick(System::Object^ sender, System::EventArgs^ e) {
+            this->Invalidate(); // Wyczyszczenie formularza
+        }
+
+    protected:
+        virtual void OnPaint(PaintEventArgs^ e) override {
+            // Rysowanie tarczy zegara
+            Graphics^ g = e->Graphics;
+            Pen^ blackPen = gcnew Pen(Color::Black, 2.0f);
+            Pen^ pen = gcnew Pen(Color::Blue, 2.0f);
+            // Środek tarczy
+            int centerX = this->ClientSize.Width / 2;
+            int centerY = this->ClientSize.Height / 2;
+            int radius = 100;
+
+            int outerRadius = 100; // Zewnętrzny promień (koniec kreski)
+            int innerRadius = 90;
+
+
+            for (int i = 0; i < 12; i++) {
+                // Obliczamy kąt w radianach (360 stopni podzielone na 12 godzin)
+                double angle = i * Math::PI / 6; // (2 * Math::PI / 12)
+
+                // Obliczamy pozycje końca i początku kreski
+                int x1 = centerX + (int)(innerRadius * Math::Cos(angle));
+                int y1 = centerY + (int)(innerRadius * Math::Sin(angle));
+                int x2 = centerX + (int)(outerRadius * Math::Cos(angle));
+                int y2 = centerY + (int)(outerRadius * Math::Sin(angle));
+
+                // Rysujemy linię (kreskę godzinową)
+                g->DrawLine(pen, x1, y1, x2, y2);
+            }
+
+            // Rysowanie okręgu
+            g->DrawEllipse(blackPen, centerX - radius, centerY - radius, 2 * radius, 2 * radius);
+
+            // Rysowanie sekundnika
+            DateTime now = DateTime::Now;
+            int seconds = now.Second;
+
+            // Kąt dla wskazówki sekundnika
+            double angle = seconds * (2 * Math::PI / 60);
+
+            // Współrzędne końca sekundnika
+            int handX = centerX + (int)(radius * 0.9 * Math::Sin(angle));
+            int handY = centerY - (int)(radius * 0.9 * Math::Cos(angle));
+
+            Pen^ redPen = gcnew Pen(Color::Red, 2.0f);
+            g->DrawLine(redPen, centerX, centerY, handX, handY);
+
+            // Usuwanie obiektów graficznych
+            delete blackPen;
+            delete redPen;
+        }
+    };
+}
