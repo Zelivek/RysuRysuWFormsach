@@ -1,0 +1,131 @@
+#pragma once
+
+namespace CppCLRWinFormsProject {
+
+    using namespace System;
+    using namespace System::ComponentModel;
+    using namespace System::Collections;
+    using namespace System::Windows::Forms;
+    using namespace System::Data;
+    using namespace System::Drawing;
+
+    public ref class Form1 : public System::Windows::Forms::Form
+    {
+    public:
+        Form1(void)
+        {
+            InitializeComponent();
+            InitializeTimer();
+        }
+
+    protected:
+        ~Form1()
+        {
+            if (components)
+            {
+                delete components;
+            }
+        }
+
+    private:
+        System::Windows::Forms::Button^ btn1;
+        System::Windows::Forms::Timer^ timer; // Timer do odświeżania animacji
+        System::ComponentModel::Container^ components;
+        double armAngle = 0.0; // Kąt ramienia (do animacji)
+        bool armMovingUp = true; // Flaga ruchu ramienia
+
+#pragma region Windows Form Designer generated code
+        void InitializeComponent(void)
+        {
+            this->btn1 = (gcnew System::Windows::Forms::Button());
+            this->SuspendLayout();
+            // 
+            // btn1
+            // 
+            this->btn1->Location = System::Drawing::Point(286, 329);
+            this->btn1->Name = L"btn1";
+            this->btn1->Size = System::Drawing::Size(100, 23);
+            this->btn1->TabIndex = 0;
+            this->btn1->Text = L"Start animacji";
+            this->btn1->UseVisualStyleBackColor = true;
+            this->btn1->Click += gcnew System::EventHandler(this, &Form1::btn1_Click);
+            // 
+            // Form1
+            // 
+            this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
+            this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
+            this->ClientSize = System::Drawing::Size(703, 451);
+            this->Controls->Add(this->btn1);
+            this->Name = L"Form1";
+            this->Text = L"Bałwanek";
+            this->ResumeLayout(false);
+        }
+#pragma endregion
+
+    private:
+        void InitializeTimer() {
+            timer = gcnew System::Windows::Forms::Timer();
+            timer->Interval = 100; // Co 100 ms (10 razy na sekundę)
+            timer->Tick += gcnew EventHandler(this, &Form1::OnTimerTick);
+        }
+
+        // Start animacji po kliknięciu przycisku
+        System::Void btn1_Click(System::Object^ sender, System::EventArgs^ e) {
+            timer->Start();
+        }
+
+        // Wywoływane przez timer co 100 ms
+        System::Void OnTimerTick(System::Object^ sender, System::EventArgs^ e) {
+            if (armMovingUp)
+            {
+                armAngle += 5.0; // Ramię idzie w górę
+                if (armAngle >= 45.0)
+                    armMovingUp = false; // Zmiana kierunku
+            }
+            else
+            {
+                armAngle -= 5.0; // Ramię idzie w dół
+                if (armAngle <= 0.0)
+                    armMovingUp = true; // Zmiana kierunku
+            }
+
+            // Rysowanie bałwanka w oknie formularza
+            Graphics^ g = this->CreateGraphics(); // Pobieramy obiekt Graphics do rysowania na formularzu
+
+            // Współrzędne środka bałwanka
+            int centerX = this->ClientSize.Width / 2;
+            int centerY = this->ClientSize.Height / 2;
+
+            // Parametry bałwanka
+            int bottomRadius = 70; // Promień dolnego koła
+            int middleRadius = 50; // Promień środkowego koła
+            int topRadius = 30;    // Promień górnego koła
+
+            // Rysowanie ciała bałwanka (3 koła)
+            g->FillEllipse(Brushes::White, centerX - bottomRadius, centerY + 40 - bottomRadius, 2 * bottomRadius, 2 * bottomRadius); // dolne
+            g->FillEllipse(Brushes::White, centerX - middleRadius, centerY - middleRadius, 2 * middleRadius, 2 * middleRadius); // środkowe
+            g->FillEllipse(Brushes::White, centerX - topRadius, centerY - 80 - topRadius, 2 * topRadius, 2 * topRadius); // górne
+
+            // Rysowanie oczu bałwanka
+            g->FillEllipse(Brushes::Black, centerX - 10, centerY - 85, 5, 5); // lewe oko
+            g->FillEllipse(Brushes::Black, centerX + 5, centerY - 85, 5, 5);  // prawe oko
+
+            // Rysowanie uśmiechu bałwanka
+            g->DrawArc(Pens::Black, centerX - 15, centerY - 75, 30, 15, 0, -180); // uśmiech
+
+            // Rysowanie ręki (animowana)
+            int armLength = 50;
+            double armAngleRad = armAngle * Math::PI / 180.0; // Przemiana kąta w radiany
+
+            int handX = centerX + (int)(armLength * Math::Cos(armAngleRad));
+            int handY = centerY - 50 + (int)(armLength * Math::Sin(armAngleRad));
+
+            g->DrawLine(Pens::Black, centerX + 30, centerY - 50, handX, handY); // Prawa ręka
+
+            // Rysowanie guziczków
+            g->FillEllipse(Brushes::Black, centerX - 10, centerY + 10, 10, 10);  // guzik 1
+            g->FillEllipse(Brushes::Black, centerX - 10, centerY + 30, 10, 10);  // guzik 2
+            g->FillEllipse(Brushes::Black, centerX - 10, centerY + 50, 10, 10);  // guzik 3
+        }
+    };
+}
